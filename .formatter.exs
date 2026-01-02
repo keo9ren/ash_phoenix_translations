@@ -1,11 +1,5 @@
-[
-  import_deps: [:ash, :spark, :phoenix, :phoenix_live_view],
-  plugins: [Spark.Formatter],
-  inputs: [
-    "{mix,.formatter}.exs",
-    "{config,lib,test}/**/*.{ex,exs}"
-  ],
-  locals_without_parens: [
+
+locals_without_parens = [
     # DSL functions
     translatable_attribute: 2,
     translatable_attribute: 3,
@@ -16,6 +10,20 @@
     audit_changes: 1,
     gettext_module: 1,
     auto_validate: 1,
-    policy: 1
+    policy: 1,
+    graphql_translations: 1,
+    json_api_translations: 1
+  ]
+
+[
+  import_deps: [:ash, :spark, :phoenix, :phoenix_live_view],
+  plugins: [Spark.Formatter],
+  inputs: [
+    "{mix,.formatter}.exs",
+    "{config,lib,test}/**/*.{ex,exs}"
+  ],
+  locals_without_parens: locals_without_parens,
+  export: [
+    locals_without_parens: locals_without_parens
   ]
 ]
