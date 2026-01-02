@@ -85,6 +85,8 @@ defmodule AshPhoenixTranslations.Transformers.AddTranslationCalculations do
         :string,
         {calculation_module, calculation_opts},
         public?: true,
+        filterable?: true,
+        sortable?: true,
         description: "Current locale translation for #{attr.name}"
       )
 

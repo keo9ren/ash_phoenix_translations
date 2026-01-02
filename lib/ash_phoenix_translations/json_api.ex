@@ -80,9 +80,11 @@ defmodule AshPhoenixTranslations.JsonApi do
     def call(conn, _opts) do
       locale = extract_locale(conn)
 
+      # Set locale in Ash context so calculations can access it
       conn
       |> assign(:locale, locale)
       |> put_private(:ash_json_api_locale, locale)
+      |> Ash.PlugHelpers.set_context(%{locale: locale})
     end
 
     defp extract_locale(conn) do

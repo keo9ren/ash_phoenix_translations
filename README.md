@@ -398,40 +398,61 @@ query {
 
 ## JSON:API Integration
 
-Full JSON:API support with locale handling:
+AshPhoenixTranslations provides seamless JSON:API integration with automatic locale handling through query parameters and Accept-Language headers.
+
+### Step 1: Configure Your Resource
 
 ```elixir
 defmodule MyApp.Product do
   use Ash.Resource,
+    domain: MyApp.Catalog,
+    data_layer: AshPostgres.DataLayer,
     extensions: [AshPhoenixTranslations, AshJsonApi.Resource]
-  
+
   json_api do
     type "product"
-    
+
     routes do
       base "/products"
       get :read
       index :read
+      patch :update
     end
   end
-  
+
   translations do
     translatable_attribute :name, :string, locales: [:en, :es, :fr]
-    json_api_translations true
+    translatable_attribute :description, :text, locales: [:en, :es, :fr]
+    backend :database
+  end
+
+  attributes do
+    uuid_primary_key :id
+    attribute :sku, :string, allow_nil?: false
+    attribute :price, :decimal
+  end
+
+  actions do
+    defaults [:read, :create, :update, :destroy]
   end
 end
 ```
 
-Add the locale plug to your router:
+**Note**: Calculations are automatically exposed in JSON:API responses - no additional configuration needed!
+
+### Step 2: Add LocalePlug to Your Router
 
 ```elixir
-pipeline :api do
+defmodule MyAppWeb.Router do
+  use Phoenix.Router
+
+  pipeline :api do
   plug :accepts, ["json"]
   plug AshPhoenixTranslations.JsonApi.LocalePlug
 end
 ```
 
-Request with locale:
+### Step 3: Query with Locale
 
 ```bash
 # Via query parameter
@@ -439,7 +460,94 @@ GET /api/products?locale=es
 
 # Via Accept-Language header
 GET /api/products
-Accept-Language: es-ES,es;q=0.9
+Accept-Language: es-ES,es;q=0.9,en;q=0.8
+
+# With sparse fieldsets
+GET /api/products?locale=fr&fields[products]=name,description,price
+```
+
+**Response Example:**
+```json
+{
+  "data": [
+    {
+      "type": "product",
+      "id": "123",
+      "attributes": {
+        "name": "Producto",
+        "description": "Una descripción en español",
+        "sku": "PROD-001",
+        "price": "29.99"
+      }
+    }
+  ],
+  "meta": {
+    "available_locales": ["en", "es", "fr"],
+    "translation_completeness": 85.5,
+    "default_locale": "en"
+  }
+}
+```
+
+### Step 4: Update Translations
+
+Three update formats are supported:
+
+**Format 1: Single Locale Update**
+```bash
+PATCH /api/products/123
+Content-Type: application/vnd.api+json
+
+{
+  "data": {
+    "type": "product",
+    "id": "123",
+    "attributes": {
+      "name": {
+        "locale": "fr",
+        "value": "Produit Mis à Jour"
+      }
+    }
+  }
+}
+```
+
+**Format 2: Multiple Locales**
+```bash
+PATCH /api/products/123
+Content-Type: application/vnd.api+json
+
+{
+  "data": {
+    "type": "product",
+    "id": "123",
+    "attributes": {
+      "name": {
+        "translations": {
+          "en": "Updated Product",
+          "es": "Producto Actualizado",
+          "fr": "Produit Mis à Jour"
+        }
+      }
+    }
+  }
+}
+```
+
+**Format 3: Simple String (Default Locale)**
+```bash
+PATCH /api/products/123
+Content-Type: application/vnd.api+json
+
+{
+  "data": {
+    "type": "product",
+    "id": "123",
+    "attributes": {
+      "name": "Simple Update"
+    }
+  }
+}
 ```
 
 ## Embedded Schema Support
