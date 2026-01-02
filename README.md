@@ -277,38 +277,121 @@ mix ash_phoenix_translations.install --no-migration
 
 Automatically expose translations through GraphQL:
 
+### Step 1: Configure Your Resource
+
 ```elixir
 defmodule MyApp.Product do
   use Ash.Resource,
     extensions: [AshPhoenixTranslations, AshGraphql.Resource]
-  
+
   graphql do
     type :product
-    
+
     queries do
       get :get_product, :read
       list :list_products, :read
     end
   end
-  
+
   translations do
     translatable_attribute :name, :string, locales: [:en, :es, :fr]
-    graphql_translations true
+    translatable_attribute :description, :text, locales: [:en, :es, :fr]
+    graphql_translations true  # Mark this resource for GraphQL extensions
   end
 end
 ```
 
-Query with locale:
+### Step 2: Generate GraphQL Extensions
+
+Run the Mix task to generate Absinthe schema extensions:
+
+```bash
+mix ash_phoenix_translations.gen.graphql_extensions --domains MyApp.Catalog
+```
+
+This creates a file like `lib/my_app_web/schema/translation_extensions.ex`:
+
+```elixir
+defmodule MyAppWeb.Schema.TranslationExtensions do
+  use Absinthe.Schema.Notation
+
+  extend object(:product) do
+    field :name_translation, :string do
+      arg :locale, non_null(:locale_scalar)
+      resolve &AshPhoenixTranslations.Graphql.resolve_translation/3
+    end
+
+    field :name_translations, list_of(:translation) do
+      resolve &AshPhoenixTranslations.Graphql.resolve_all_translations/3
+    end
+
+    field :description_translation, :string do
+      arg :locale, non_null(:locale_scalar)
+      resolve &AshPhoenixTranslations.Graphql.resolve_translation/3
+    end
+
+    field :description_translations, list_of(:translation) do
+      resolve &AshPhoenixTranslations.Graphql.resolve_all_translations/3
+    end
+  end
+
+  scalar :locale_scalar do
+    parse &AshPhoenixTranslations.Graphql.parse_locale/1
+    serialize &AshPhoenixTranslations.Graphql.serialize_locale/1
+  end
+
+  object :translation do
+    field :locale, non_null(:string)
+    field :value, :string
+  end
+end
+```
+
+### Step 3: Import Extensions in Your Schema
+
+```elixir
+defmodule MyAppWeb.Schema do
+  use Absinthe.Schema
+  use AshGraphql, domains: [MyApp.Catalog]
+
+  # Import the generated translation extensions
+  import_type_extensions MyAppWeb.Schema.TranslationExtensions
+
+  query do
+    # Your queries are defined by AshGraphql
+  end
+end
+```
+
+### Step 4: Query Translations
 
 ```graphql
+# Query with specific locale
 query {
-  listProducts(locale: "es") {
+  listProducts {
     id
-    name  # Automatically translated to Spanish
-    nameTranslations {  # All translations
-      locale
-      value
+    nameTranslation(locale: "es")        # Returns Spanish translation
+    descriptionTranslation(locale: "es") # Returns Spanish description
+  }
+}
+
+# Query all translations for a field
+query {
+  getProduct(id: "123") {
+    id
+    nameTranslations {
+      locale  # "en", "es", "fr"
+      value   # The translated value
     }
+  }
+}
+
+# Mix locales
+query {
+  listProducts {
+    id
+    nameTranslation(locale: "es")  # Spanish name
+    descriptionTranslation(locale: "fr")  # French description
   }
 }
 ```

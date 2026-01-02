@@ -604,7 +604,9 @@ defmodule AshPhoenixTranslations.TranslationsTest do
       assert :audit_changes in keys
       assert :auto_validate in keys
       assert :translatable_attributes in keys
-      assert length(keys) == 6
+      assert :graphql_translations in keys
+      assert :json_api_translations in keys
+      assert length(keys) == 8
     end
   end
 

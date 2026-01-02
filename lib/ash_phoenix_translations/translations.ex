@@ -8,7 +8,9 @@ defmodule AshPhoenixTranslations.Translations do
     :cache_ttl,
     :audit_changes,
     :auto_validate,
-    :translatable_attributes
+    :translatable_attributes,
+    :graphql_translations,
+    :json_api_translations
   ]
 
   @type t :: %__MODULE__{
@@ -16,6 +18,8 @@ defmodule AshPhoenixTranslations.Translations do
           cache_ttl: pos_integer(),
           audit_changes: boolean(),
           auto_validate: boolean(),
-          translatable_attributes: [AshPhoenixTranslations.TranslatableAttribute.t()]
+          translatable_attributes: [AshPhoenixTranslations.TranslatableAttribute.t()],
+          graphql_translations: boolean(),
+          json_api_translations: boolean()
         }
 end

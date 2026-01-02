@@ -11,7 +11,8 @@
       "Bash(MIX_ENV=test mix compile:*)",
       "Bash(for file in /Users/raulgracia/Code/ash_phoenix_translations/dev_notes/*.md)",
       "Bash(done)",
-      "Bash(mix test:*)"
+      "Bash(mix test:*)",
+      "Bash(MIX_ENV=test mix test:*)"
     ],
     "deny": [],
     "ask": []

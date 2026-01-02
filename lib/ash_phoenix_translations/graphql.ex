@@ -201,7 +201,7 @@ defmodule AshPhoenixTranslations.Graphql do
       locale: [
         type: :locale,
         description: "Locale for translations",
-        default: :en
+        default: Application.get_env(:ash_phoenix_translations, :default_locale, :en)
       ]
     ]
 
@@ -247,6 +247,7 @@ defmodule AshPhoenixTranslations.Graphql do
 
   defp has_graphql_extension?(dsl_state) do
     spark_extension = Spark.Dsl.Extension
+
     AshGraphql.Resource in spark_extension.get_persisted(dsl_state, :extensions, [])
   rescue
     _ -> false

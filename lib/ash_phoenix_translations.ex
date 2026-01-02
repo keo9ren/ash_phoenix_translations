@@ -809,6 +809,16 @@ defmodule AshPhoenixTranslations do
             default: true,
             doc: "Whether to automatically validate required translations"
           ],
+          graphql_translations: [
+            type: :boolean,
+            default: false,
+            doc: "Enable GraphQL translation fields and resolvers"
+          ],
+          json_api_translations: [
+            type: :boolean,
+            default: false,
+            doc: "Enable JSON API translation support"
+          ],
           policy: [
             type: :keyword_list,
             doc: "Policy configuration for translation access control",
@@ -2338,3 +2348,4 @@ defmodule AshPhoenixTranslations do
     AshPhoenixTranslations.Info.translatable_attributes(resource_module)
   end
 end
+
