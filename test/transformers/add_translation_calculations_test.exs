@@ -78,14 +78,14 @@ defmodule AshPhoenixTranslations.Transformers.AddTranslationCalculationsTest do
         |> resource_info.calculations()
         |> Enum.find(&(&1.name == :name))
 
-      assert name_calc.calculation ==
-               {AshPhoenixTranslations.Calculations.DatabaseTranslation,
-                [
-                  attribute_name: :name,
-                  fallback: :en,
-                  locales: [:en, :es, :fr],
-                  backend: :database
-                ]}
+      {module, opts} = name_calc.calculation
+
+      assert module == AshPhoenixTranslations.Calculations.DatabaseTranslation
+      assert Keyword.get(opts, :attribute_name) == :name
+      assert Keyword.get(opts, :fallback) == :en
+      assert Keyword.get(opts, :locales) == [:en, :es, :fr]
+      assert Keyword.get(opts, :backend) == :database
+      assert Keyword.get(opts, :resource) == DatabaseProduct
     end
 
     test "all_translations calculations use AllTranslations module" do

@@ -50,10 +50,11 @@ defmodule AshPhoenixTranslations.Transformers.AddTranslationCalculations do
         :gettext -> AshPhoenixTranslations.Calculations.GettextTranslation
       end
 
-    # Get the resource name for Gettext message IDs
+    # Get the resource module for data layer checks and Gettext message IDs
+    resource_module = Transformer.get_persisted(dsl_state, :module)
+
     resource_name =
-      dsl_state
-      |> Transformer.get_persisted(:module)
+      resource_module
       |> Module.split()
       |> List.last()
       |> Macro.underscore()
@@ -63,7 +64,8 @@ defmodule AshPhoenixTranslations.Transformers.AddTranslationCalculations do
         attribute_name: attr.name,
         fallback: attr.fallback,
         locales: attr.locales,
-        backend: backend
+        backend: backend,
+        resource: resource_module
       ]
       |> then(fn opts ->
         if backend == :gettext do
