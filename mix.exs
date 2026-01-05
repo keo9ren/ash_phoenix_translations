@@ -68,6 +68,7 @@ defmodule AshPhoenixTranslations.MixProject do
       {:gettext, "~> 1.0", optional: true},
       {:absinthe, "~> 1.7", optional: true},
       {:dataloader, "~> 2.0", optional: true},
+      {:ash_graphql, "~> 1.0", optional: true},
 
       # Required for import/export functionality
       {:csv, "~> 3.0"},
