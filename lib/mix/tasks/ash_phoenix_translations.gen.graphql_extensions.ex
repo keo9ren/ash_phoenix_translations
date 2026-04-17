@@ -225,9 +225,7 @@ defmodule Mix.Tasks.AshPhoenixTranslations.Gen.GraphqlExtensions do
 
   defp generate_extension_code(module_name, resources) do
     extensions =
-      resources
-      |> Enum.map(&GraphqlExtensions.generate_resource_extension/1)
-      |> Enum.join("\n")
+      Enum.map_join(resources, "\n", &GraphqlExtensions.generate_resource_extension/1)
 
     """
     defmodule #{inspect(module_name)} do
@@ -245,7 +243,7 @@ defmodule Mix.Tasks.AshPhoenixTranslations.Gen.GraphqlExtensions do
           end
 
       Resources with translation support:
-      #{resources |> Enum.map(&("  - " <> inspect(&1))) |> Enum.join("\n")}
+      #{Enum.map_join(resources, "\n", &("  - " <> inspect(&1)))}
       \"\"\"
 
       use Absinthe.Schema.Notation
@@ -260,11 +258,10 @@ defmodule Mix.Tasks.AshPhoenixTranslations.Gen.GraphqlExtensions do
   defp list_resources(resources) do
     resources
     |> Enum.with_index(1)
-    |> Enum.map(fn {resource, index} ->
+    |> Enum.map_join("\n", fn {resource, index} ->
       attrs = AshPhoenixTranslations.Info.translatable_attributes(resource)
       attr_names = Enum.map(attrs, & &1.name)
       "  #{index}. #{inspect(resource)} - Fields: #{inspect(attr_names)}"
     end)
-    |> Enum.join("\n")
   end
 end

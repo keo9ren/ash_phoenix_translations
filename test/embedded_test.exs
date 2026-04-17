@@ -890,8 +890,6 @@ defmodule AshPhoenixTranslations.EmbeddedTest do
 
       # User has :name as translatable
       assert is_list(paths)
-      # Should include at least the direct paths
-      assert length(paths) >= 0
     end
 
     test "handles modules without translations" do

@@ -60,37 +60,7 @@ defmodule AshPhoenixTranslations.Changes.ImportTranslations do
     # Parse CSV format: attribute,locale,value
     translations
     |> String.split("\n", trim: true)
-    |> Enum.reduce(%{}, fn line, acc ->
-      case String.split(line, ",", parts: 3) do
-        [attribute, locale, value] ->
-          # SECURITY: Validate field and locale to prevent atom exhaustion
-          # Use String.to_existing_atom/1 instead of String.to_atom/1
-          # Fields and locales must already exist as atoms
-          trimmed_attribute = String.trim(attribute)
-          trimmed_locale = String.trim(locale)
-
-          with {:ok, attr_key} <- validate_field_atom(trimmed_attribute),
-               {:ok, locale_key} <-
-                 AshPhoenixTranslations.LocaleValidator.validate_locale(trimmed_locale) do
-            value = String.trim(value)
-
-            Map.update(acc, attr_key, %{locale_key => value}, fn existing ->
-              Map.put(existing, locale_key, value)
-            end)
-          else
-            {:error, :invalid_field} ->
-              # Skip invalid fields with warning (already logged by validator)
-              acc
-
-            {:error, :invalid_locale} ->
-              # Skip invalid locales with warning (already logged by validator)
-              acc
-          end
-
-        _ ->
-          acc
-      end
-    end)
+    |> Enum.reduce(%{}, &parse_csv_line/2)
   end
 
   defp parse_translations(translations, :xliff) when is_binary(translations) do
@@ -100,6 +70,29 @@ defmodule AshPhoenixTranslations.Changes.ImportTranslations do
   end
 
   defp parse_translations(translations, _format), do: translations
+
+  defp parse_csv_line(line, acc) do
+    case String.split(line, ",", parts: 3) do
+      [attribute, locale, value] -> add_csv_entry(acc, attribute, locale, value)
+      _ -> acc
+    end
+  end
+
+  # SECURITY: Validate field and locale to prevent atom exhaustion.
+  # Invalid fields/locales are skipped (already logged by the validators).
+  defp add_csv_entry(acc, attribute, locale, value) do
+    with {:ok, attr_key} <- validate_field_atom(String.trim(attribute)),
+         {:ok, locale_key} <-
+           AshPhoenixTranslations.LocaleValidator.validate_locale(String.trim(locale)) do
+      trimmed_value = String.trim(value)
+
+      Map.update(acc, attr_key, %{locale_key => trimmed_value}, fn existing ->
+        Map.put(existing, locale_key, trimmed_value)
+      end)
+    else
+      {:error, _reason} -> acc
+    end
+  end
 
   # Helper to validate field atoms safely
   defp validate_field_atom(field_name) when is_binary(field_name) do

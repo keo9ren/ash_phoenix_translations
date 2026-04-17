@@ -53,6 +53,7 @@ defmodule AshPhoenixTranslations.GraphqlExtensions do
   """
 
   alias AshPhoenixTranslations.Info
+  alias Spark.Dsl.Extension, as: DslExtension
 
   @doc """
   Generates Absinthe schema extension code for all translatable resources in domains.
@@ -116,39 +117,32 @@ defmodule AshPhoenixTranslations.GraphqlExtensions do
   def get_translatable_resources(domains) when is_list(domains) do
     domains
     |> Enum.flat_map(&get_domain_resources/1)
-    |> Enum.filter(&has_translations?/1)
-    |> Enum.filter(&has_graphql_extension?/1)
+    |> Enum.filter(&(has_translations?(&1) and has_graphql_extension?(&1)))
   end
 
   defp get_domain_resources(domain) do
-    try do
-      domain.resources()
-    rescue
-      _ -> []
-    end
+    domain.resources()
+  rescue
+    _ -> []
   end
 
   defp has_translations?(resource) do
-    try do
-      translatable_attrs = Info.translatable_attributes(resource)
-      not Enum.empty?(translatable_attrs)
-    rescue
-      _ -> false
-    end
+    translatable_attrs = Info.translatable_attributes(resource)
+    not Enum.empty?(translatable_attrs)
+  rescue
+    _ -> false
   end
 
   defp has_graphql_extension?(resource) do
-    try do
-      extensions = Spark.Dsl.Extension.get_persisted(resource, :extensions, [])
+    extensions = DslExtension.get_persisted(resource, :extensions, [])
 
-      if Code.ensure_loaded?(AshGraphql.Resource) do
-        AshGraphql.Resource in extensions
-      else
-        false
-      end
-    rescue
-      _ -> false
+    if Code.ensure_loaded?(AshGraphql.Resource) do
+      AshGraphql.Resource in extensions
+    else
+      false
     end
+  rescue
+    _ -> false
   end
 
   @doc """
@@ -185,10 +179,7 @@ defmodule AshPhoenixTranslations.GraphqlExtensions do
     translatable_attrs = Info.translatable_attributes(resource)
     graphql_type = get_graphql_type(resource)
 
-    fields =
-      translatable_attrs
-      |> Enum.map(&generate_field_extensions/1)
-      |> Enum.join("\n")
+    fields = Enum.map_join(translatable_attrs, "\n", &generate_field_extensions/1)
 
     """
       # Extensions for #{inspect(resource)}
@@ -199,37 +190,25 @@ defmodule AshPhoenixTranslations.GraphqlExtensions do
   end
 
   defp get_graphql_type(resource) do
-    try do
-      if Code.ensure_loaded?(AshGraphql.Resource) do
-        # Try to get the GraphQL type from AshGraphql configuration
-        case AshGraphql.Resource.Info.type(resource) do
-          nil ->
-            # Fall back to resource name
-            resource
-            |> Module.split()
-            |> List.last()
-            |> Macro.underscore()
-            |> String.to_atom()
-
-          type ->
-            type
-        end
-      else
-        # Fall back to resource name if AshGraphql not loaded
-        resource
-        |> Module.split()
-        |> List.last()
-        |> Macro.underscore()
-        |> String.to_atom()
+    if Code.ensure_loaded?(AshGraphql.Resource) do
+      # Try to get the GraphQL type from AshGraphql configuration
+      case AshGraphql.Resource.Info.type(resource) do
+        nil -> fallback_graphql_type(resource)
+        type -> type
       end
-    rescue
-      _ ->
-        resource
-        |> Module.split()
-        |> List.last()
-        |> Macro.underscore()
-        |> String.to_atom()
+    else
+      fallback_graphql_type(resource)
     end
+  rescue
+    _ -> fallback_graphql_type(resource)
+  end
+
+  defp fallback_graphql_type(resource) do
+    resource
+    |> Module.split()
+    |> List.last()
+    |> Macro.underscore()
+    |> String.to_atom()
   end
 
   defp generate_field_extensions(attr) do

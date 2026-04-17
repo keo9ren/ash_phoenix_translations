@@ -13,7 +13,7 @@ defmodule AshPhoenixTranslations.Calculations.DatabaseTranslation do
   end
 
   @impl true
-  def has_expression?() do
+  def has_expression? do
     # Always return false to ensure calculate/3 is used for cross-data-layer compatibility
     # expression/2 is available but only used internally when appropriate
     false
