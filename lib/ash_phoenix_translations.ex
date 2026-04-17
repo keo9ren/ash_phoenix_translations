@@ -2348,4 +2348,3 @@ defmodule AshPhoenixTranslations do
     AshPhoenixTranslations.Info.translatable_attributes(resource_module)
   end
 end
-

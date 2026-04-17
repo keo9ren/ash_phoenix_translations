@@ -217,7 +217,7 @@ defmodule Mix.Tasks.AshPhoenixTranslations.Gen.GraphqlExtensions do
     default_module = Module.concat([app_module <> "Web", "Schema", "TranslationExtensions"])
     default_path = "lib/#{app_name}_web/schema/translation_extensions.ex"
 
-    module_name = opts[:module] && Module.concat([opts[:module]]) || default_module
+    module_name = (opts[:module] && Module.concat([opts[:module]])) || default_module
     output_path = opts[:output] || default_path
 
     {output_path, module_name}

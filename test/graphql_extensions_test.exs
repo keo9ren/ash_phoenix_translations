@@ -85,7 +85,10 @@ defmodule AshPhoenixTranslations.GraphqlExtensionsTest do
       refute result.args[:locale][:default] == :de
 
       # Should be :en (default) or configured value
-      assert result.args[:locale][:default] in [:en, Application.get_env(:ash_phoenix_translations, :default_locale, :en)]
+      assert result.args[:locale][:default] in [
+               :en,
+               Application.get_env(:ash_phoenix_translations, :default_locale, :en)
+             ]
     end
   end
 end
