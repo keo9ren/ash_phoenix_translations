@@ -146,6 +146,7 @@ defmodule AshPhoenixTranslations.MixProject do
       setup: ["deps.get", "compile"],
       test: ["test --trace"],
       "test.watch": ["test.watch --trace"],
+      precommit: ["format", "credo --strict", "sobelow", "dialyzer"],
       quality: ["format", "credo --strict", "sobelow", "dialyzer"],
       "quality.ci": ["format --check-formatted", "credo --strict", "sobelow --exit", "dialyzer"]
     ]
