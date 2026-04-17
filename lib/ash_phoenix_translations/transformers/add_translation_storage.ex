@@ -12,7 +12,6 @@ defmodule AshPhoenixTranslations.Transformers.AddTranslationStorage do
 
   alias Ash.Resource.Builder
   alias Spark.Dsl.Transformer
-  require Ash.Expr
 
   @impl true
   def transform(dsl_state) do

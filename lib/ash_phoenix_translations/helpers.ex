@@ -305,7 +305,15 @@ defmodule AshPhoenixTranslations.Helpers do
   # Helper to safely convert {:safe, binary} tuples from html_escape to strings for interpolation
   defp safe_to_string({:safe, binary}) when is_binary(binary), do: binary
   defp safe_to_string({:safe, iolist}), do: IO.iodata_to_binary(iolist)
-  defp safe_to_string(other), do: to_string(other)
+
+  defp translation_locales(translations) when is_map(translations) do
+    case Map.keys(translations) do
+      [] -> [:en, :es, :fr]
+      keys -> keys
+    end
+  end
+
+  defp translation_locales(_), do: [:en, :es, :fr]
 
   @doc """
   Translates a field from a resource with automatic HTML escaping.
@@ -1459,7 +1467,7 @@ defmodule AshPhoenixTranslations.Helpers do
   def translation_status(resource, field, opts \\ []) do
     if @phoenix_html_available do
       translations = all_translations(resource, field)
-      locales = opts[:locales] || Map.keys(translations) || [:en, :es, :fr]
+      locales = opts[:locales] || translation_locales(translations)
 
       badges =
         Enum.map_join(locales, "", fn locale ->
@@ -1474,7 +1482,7 @@ defmodule AshPhoenixTranslations.Helpers do
     else
       # Return a simple text representation if Phoenix.HTML is not available
       translations = all_translations(resource, field)
-      locales = opts[:locales] || Map.keys(translations) || [:en, :es, :fr]
+      locales = opts[:locales] || translation_locales(translations)
 
       Enum.map_join(locales, " ", fn locale ->
         translated = Map.get(translations, locale)
