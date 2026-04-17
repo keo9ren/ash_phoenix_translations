@@ -232,9 +232,9 @@ defmodule AshPhoenixTranslations.Embedded do
     paths = extract_translatable_paths(resource)
 
     stats =
-      Enum.map(paths, fn path ->
-        {path, calculate_path_completeness(resource, path)}
-      end)
+      paths
+      |> Enum.map(fn path -> {path, calculate_path_completeness(resource, path)} end)
+      |> Enum.filter(fn {_, pct} -> is_number(pct) end)
 
     %{
       total_paths: length(paths),
@@ -529,16 +529,37 @@ defmodule AshPhoenixTranslations.Embedded do
   end
 
   defp calculate_path_completeness(resource, path) do
-    value = get_in_embedded(resource, path)
+    {parent_path, [field]} = Enum.split(path, -1)
+    storage_field = :"#{field}_translations"
 
-    if is_map(value) do
-      # Would get from config
-      expected_locales = [:en, :es, :fr]
-      present_locales = Map.keys(value)
+    parent =
+      if parent_path == [] do
+        resource
+      else
+        get_in_embedded(resource, parent_path)
+      end
 
-      length(present_locales) / length(expected_locales) * 100
-    else
-      0
+    cond do
+      is_nil(parent) or match?(%Ash.NotLoaded{}, parent) ->
+        nil
+
+      is_map(parent) ->
+        value = Map.get(parent, storage_field)
+        expected_locales = [:en, :es, :fr]
+
+        if is_map(value) and not is_struct(value) do
+          present_locales =
+            value
+            |> Map.keys()
+            |> Enum.filter(&(&1 in expected_locales))
+
+          length(present_locales) / length(expected_locales) * 100
+        else
+          0
+        end
+
+      true ->
+        nil
     end
   end
 
