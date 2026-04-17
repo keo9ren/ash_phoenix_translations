@@ -27,7 +27,8 @@ defmodule AshPhoenixTranslations.MixProject do
         ignore_warnings: ".dialyzer_ignore.exs"
       ],
       aliases: aliases(),
-      cli: cli()
+      cli: cli(),
+      usage_rules: usage_rules()
     ]
   end
 
@@ -149,6 +150,39 @@ defmodule AshPhoenixTranslations.MixProject do
       precommit: ["format", "credo --strict", "sobelow", "dialyzer"],
       quality: ["format", "credo --strict", "sobelow", "dialyzer"],
       "quality.ci": ["format --check-formatted", "credo --strict", "sobelow --exit", "dialyzer"]
+    ]
+  end
+
+  defp usage_rules do
+    # Example for those using claude.
+    [
+      file: "CLAUDE.md",
+      # rules to include directly in CLAUDE.md
+      # :usage_rules itself provides rules for search_docs, docs, etc.
+      # use a regex to match multiple deps, or atoms/strings for specific ones
+      usage_rules: [:usage_rules, :ash, ~r/^ash_/],
+      # If your CLAUDE.md is getting too big, link instead of inlining:
+      usage_rules: [:ash, {~r/^ash_/, link: :markdown}],
+      # or use skills
+      skills: [
+        location: ".claude/skills",
+        # build skills that combine multiple usage rules
+        build: [
+          "ash-framework": [
+            # The description tells people how to use this skill.
+            description:
+              "Use this skill working with Ash Framework or any of its extensions. Always consult this when making any domain changes, features or fixes.",
+            # Include all Ash dependencies
+            usage_rules: [:ash, ~r/^ash_/]
+          ],
+          "phoenix-framework": [
+            description:
+              "Use this skill working with Phoenix Framework. Consult this when working with the web layer, controllers, views, liveviews etc.",
+            # Include all Phoenix dependencies
+            usage_rules: [:phoenix, ~r/^phoenix_/]
+          ]
+        ]
+      ]
     ]
   end
 end
